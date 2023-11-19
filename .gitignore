@@ -1,0 +1,15 @@
+# IDE-specific files
+.vscode/
+.idea/
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Config files
+config.py
+
+# uploads
+/uploads

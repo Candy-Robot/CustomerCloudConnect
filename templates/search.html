@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Query</title>
+</head>
+<body>
+
+<h2>Data Query</h2>
+
+<!-- 客户编码和客户经理选择框放在同一个容器中 -->
+<div id="selectContainer">
+    <!-- 客户编码选择框 -->
+    <label for="customerCode">Customer Code:</label>
+    <select id="customerCode">
+        <option value="">-- Select --</option>
+        <!-- 通过后端接口动态加载客户编码选项 -->
+    </select>
+
+    <!-- 客户经理选择框 -->
+    <label for="customerManager">Customer Manager:</label>
+    <select id="customerManager">
+        <option value="">-- Select --</option>
+        <!-- 通过后端接口动态加载客户经理选项 -->
+    </select>
+</div>
+
+<br>
+
+<!-- 展示界面容器 -->
+<div id="displayContainer">
+    <!-- 数据将会在这里展示 -->
+</div>
+
+<script>
+    // 获取客户编码和客户经理的选择框
+    const customerCodeSelect = document.getElementById('customerCode');
+    const customerManagerSelect = document.getElementById('customerManager');
+
+    // 获取展示界面容器
+    const displayContainer = document.getElementById('displayContainer');
+
+    // 根据选择的客户编码和客户经理发起请求，并展示结果
+    function fetchData() {
+        const selectedCustomerCode = customerCodeSelect.value;
+        const selectedCustomerManager = customerManagerSelect.value;
+
+        // 发起后端请求，根据选择的客户编码和客户经理查询数据
+        fetch(`/get_data?customer_code=${selectedCustomerCode}&customer_manager=${selectedCustomerManager}`)
+            .then(response => response.json())
+            .then(data => {
+                // 清空展示容器
+                displayContainer.innerHTML = '';
+
+                // 展示数据
+                data.forEach(item => {
+                    const dataItem = document.createElement('div');
+                    dataItem.innerHTML = `
+                        <p>Customer Code: ${item.customer_code}</p>
+                        <p>Customer Manager: ${item.customer_manager}</p>
+                        <p>Company Name: ${item.company_name}</p>
+                        <p>Data Score: ${item.data_score}</p>
+                        <p>Last Upload Time: ${item.last_upload_time}</p>
+                        <p>Last Modified Time: ${item.last_modified_time}</p>
+                        <p>Restore Time: ${item.restore_time}</p>
+                        <hr>
+                    `;
+                    displayContainer.appendChild(dataItem);
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    }
+
+    // 监听选择框变化，触发数据查询
+    customerCodeSelect.addEventListener('change', fetchData);
+    customerManagerSelect.addEventListener('change', fetchData);
+
+    // 初始化页面时触发一次查询
+    fetchData();
+</script>
+
+</body>
+</html>

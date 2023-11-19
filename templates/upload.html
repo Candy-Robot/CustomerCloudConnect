@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>文件上传</title>
+    <style>
+        body {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+            margin: 0;
+        }
+
+        #uploadContainer {
+            text-align: center;
+            padding: 20px;
+            border: 2px solid #ccc;
+            border-radius: 8px;
+        }
+
+        #uploadResult {
+            margin-top: 20px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <h2>上传Excel文件</h2>
+    
+    <input type="file" id="excelFileInput" accept=".xls, .xlsx">
+    <button type="button" onclick="uploadExcel()">上传</button>
+
+    <script>
+        function uploadExcel() {
+            // 获取文件输入框
+            var fileInput = document.getElementById('excelFileInput');
+            
+            // 检查是否选择了文件
+            if (fileInput.files.length > 0) {
+                // 获取文件
+                var file = fileInput.files[0];
+                
+                // 检查文件类型
+                if (file.type === 'application/vnd.ms-excel' || file.type === 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet') {
+                    // 创建一个FormData对象，用于将文件发送到服务器
+                    var formData = new FormData();
+                    formData.append('excelFile', file);
+
+                    // 发送文件到服务器的逻辑可以在此添加
+
+                    // 例如，使用fetch API发送文件到服务器
+                    fetch('/upload', {
+                        method: 'POST',
+                        body: formData
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        // 处理服务器的响应
+                        console.log(data);
+                        if (data.success) {
+                            document.getElementById('uploadResult').innerHTML = '上传成功'+ data.message;
+                            // 这里可以添加上传成功跳转到别的页面的代码
+                            
+                        } else {
+                            document.getElementById('uploadResult').innerHTML = '上传失败: ' + data.message;
+                        }
+                    })
+                    .catch(error => {
+                        document.getElementById('uploadResult').innerHTML = '上传失败';
+                        console.error('Error:', error);
+                    });     
+                } else {
+                    alert('请选择有效的Excel文件(.xls 或 .xlsx)');
+                }
+            } else {
+                alert('请先选择一个文件');
+            }
+        }
+    </script>
+</body>
+</html>
