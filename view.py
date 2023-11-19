@@ -81,4 +81,52 @@ def upload():
         else:
             return jsonify({'error': 'Invalid file type'})
         
+@mod.route('/search', methods=['GET'])
+def search():
+    return render_template('search.html')
 
+# 路由，返回客户经理选项列表
+@mod.route('/get_customer_managers', methods=['GET'])
+def get_customer_managers():
+    try:
+        # 在数据库中查询符合条件的数据
+        existing_managers = db.session.query(test_excel.customer_manager).distinct().all()
+        customer_managers = [manager[0] for manager in existing_managers]
+        return jsonify({'customer_managers': customer_managers})
+    except Exception as e:
+        return jsonify({'error': str(e)})
+    
+
+# 路由，查询数据
+@mod.route('/get_data', methods=['GET'])
+def get_data():
+    try:
+        # 从查询参数中获取客户编码和客户经理的信息
+        customer_code = request.args.get('customer_code')
+        customer_manager = request.args.get('customer_manager')
+        # 创建query实例
+        query = db.session.query(test_excel)
+        if customer_code:
+            query = query.filter_by(customer_code=customer_code)
+
+        if customer_manager:
+            query = query.filter_by(customer_manager=customer_manager)
+
+        data = query.all()
+
+        # 将查询结果转换为字典列表
+        result = []
+        for item in data:
+            result.append({
+                'customer_code': item.customer_code,
+                'customer_manager': item.customer_manager,
+                'company_name': item.company_name,
+                'data_score': item.data_score,
+                'last_upload_time': item.last_upload_time.isoformat() if item.last_upload_time else None,
+                'last_modified_time': item.last_modified_time.isoformat() if item.last_modified_time else None,
+                'restore_time': item.restore_time.isoformat() if item.restore_time else None
+            })
+
+        return jsonify({'success': True, 'data': result})
+    except Exception as e:
+        return jsonify({'error': str(e)})

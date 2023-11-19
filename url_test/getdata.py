@@ -1,5 +1,3 @@
-
-
 from flask import Flask, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 
@@ -8,6 +6,8 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'mysql+pymysql://root:12345678@localhost
 db = SQLAlchemy(app)
 
 class TestExcel(db.Model):
+    __tablename__ = 'test_excel'    # 数据库中的表名
+
     customer_code = db.Column(db.String, primary_key=True)
     customer_manager = db.Column(db.String, unique=True, nullable=False)
     company_name = db.Column(db.String)
@@ -15,6 +15,8 @@ class TestExcel(db.Model):
     last_upload_time = db.Column(db.DateTime)
     last_modified_time = db.Column(db.DateTime)
     restore_time = db.Column(db.DateTime)
+
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 # 根据客户编码和客户经理查询数据的路由
 @app.route('/get_data', methods=['GET'])
 def get_data():

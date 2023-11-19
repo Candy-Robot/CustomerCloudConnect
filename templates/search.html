@@ -7,23 +7,27 @@
 </head>
 <body>
 
-<h2>Data Query</h2>
+<h2>数采分查询</h2>
 
 <!-- 客户编码和客户经理选择框放在同一个容器中 -->
 <div id="selectContainer">
-    <!-- 客户编码选择框 -->
-    <label for="customerCode">Customer Code:</label>
-    <select id="customerCode">
-        <option value="">-- Select --</option>
-        <!-- 通过后端接口动态加载客户编码选项 -->
-    </select>
+    <!-- 客户编码输入框 -->
+    <label for="customerCode">客户编码:</label>
+    <input type="text" id="customerCode" placeholder="请输入客户编码">
 
     <!-- 客户经理选择框 -->
-    <label for="customerManager">Customer Manager:</label>
-    <select id="customerManager">
-        <option value="">-- Select --</option>
-        <!-- 通过后端接口动态加载客户经理选项 -->
+    <label for="customerManager">选择客户经理：</label>
+    <select id="customerManager" >
+        <option value="" disabled selected>请选择客户经理</option>
     </select>
+    <!-- <label for="customerManager">客户经理:</label>
+    <select id="customerManager">
+        <option value="">下拉单选</option>
+        通过后端接口动态加载客户经理选项
+    </select> -->
+
+    <!-- 查询按钮 -->
+    <button onclick="fetchData()">查询</button>
 </div>
 
 <br>
@@ -35,16 +39,37 @@
 
 <script>
     // 获取客户编码和客户经理的选择框
-    const customerCodeSelect = document.getElementById('customerCode');
-    const customerManagerSelect = document.getElementById('customerManager');
+    var customerCodeSelect = document.getElementById('customerCode');
+    var customerManagerSelect = document.getElementById('customerManager');
+
+    // 使用 Fetch API 获取客户经理选项
+    customerManagerSelect.addEventListener('click', function() {
+
+        fetch('/get_customer_managers')
+            .then(response => response.json())
+            .then(data => {
+                // 清空现有选项
+                customerManagerSelect.innerHTML = '';
+                // 将客户经理选项添加到下拉框
+                data.customer_managers.forEach(manager => {
+                    var option = document.createElement('option');
+                    option.value = manager;
+                    option.text = manager;
+                    customerManagerSelect.add(option);
+                });
+            })
+            .catch(error => console.error('Error:', error));
+    })
+
+
 
     // 获取展示界面容器
     const displayContainer = document.getElementById('displayContainer');
 
     // 根据选择的客户编码和客户经理发起请求，并展示结果
     function fetchData() {
-        const selectedCustomerCode = customerCodeSelect.value;
-        const selectedCustomerManager = customerManagerSelect.value;
+        var selectedCustomerCode = customerCodeSelect.value;
+        var selectedCustomerManager = customerManagerSelect.value;
 
         // 发起后端请求，根据选择的客户编码和客户经理查询数据
         fetch(`/get_data?customer_code=${selectedCustomerCode}&customer_manager=${selectedCustomerManager}`)
@@ -54,30 +79,26 @@
                 displayContainer.innerHTML = '';
 
                 // 展示数据
-                data.forEach(item => {
+                data.data.forEach(item => {
                     const dataItem = document.createElement('div');
                     dataItem.innerHTML = `
-                        <p>Customer Code: ${item.customer_code}</p>
-                        <p>Customer Manager: ${item.customer_manager}</p>
-                        <p>Company Name: ${item.company_name}</p>
-                        <p>Data Score: ${item.data_score}</p>
-                        <p>Last Upload Time: ${item.last_upload_time}</p>
-                        <p>Last Modified Time: ${item.last_modified_time}</p>
-                        <p>Restore Time: ${item.restore_time}</p>
+                        <p>客户编码: ${item.customer_code}</p>
+                        <p>客户经理: ${item.customer_manager}</p>
+                        <p>客户名称: ${item.company_name}</p>
+                        <p>数采分: ${item.data_score}</p>
+                        <p>最近上传时间: ${item.last_upload_time}</p>
+                        <p>最近数采分变动时间: ${item.last_modified_time}</p>
+                        <p>恢复时间: ${item.restore_time}</p>
                         <hr>
                     `;
-                    displayContainer.appendChild(dataItem);
+                    displayContainer.appendChild(dataItem);;
                 });
             })
             .catch(error => console.error('Error:', error));
     }
 
-    // 监听选择框变化，触发数据查询
-    customerCodeSelect.addEventListener('change', fetchData);
-    customerManagerSelect.addEventListener('change', fetchData);
-
     // 初始化页面时触发一次查询
-    fetchData();
+    // fetchData();
 </script>
 
 </body>
