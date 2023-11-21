@@ -43,8 +43,8 @@
     var customerManagerSelect = document.getElementById('customerManager');
 
     // 使用 Fetch API 获取客户经理选项
-    customerManagerSelect.addEventListener('click', function() {
-
+    // customerManagerSelect.addEventListener('click', function() {
+    function fetchCustomerData()   {
         fetch('/get_customer_managers')
             .then(response => response.json())
             .then(data => {
@@ -59,7 +59,7 @@
                 });
             })
             .catch(error => console.error('Error:', error));
-    })
+    }
 
 
 
@@ -99,6 +99,7 @@
 
     // 初始化页面时触发一次查询
     // fetchData();
+    fetchCustomerData()
 </script>
 
 </body>

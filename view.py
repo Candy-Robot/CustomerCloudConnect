@@ -80,7 +80,8 @@ def upload():
                 return jsonify({'error': str(e)})
         else:
             return jsonify({'error': 'Invalid file type'})
-        
+    
+
 @mod.route('/search', methods=['GET'])
 def search():
     return render_template('search.html')
