@@ -8,7 +8,6 @@ import traceback
 from sqlalchemy.exc import SQLAlchemyError
 
 # 目前引入的db没有关联app 需要解决
-
 mod = Blueprint('test',__name__)
 @mod.route('/')
 def home():
@@ -35,13 +34,17 @@ def upload():
         if file.filename.endswith('.xls') or file.filename.endswith('.xlsx'):
             try:
                 df = pd.read_excel(file)
+                # 记录新增数据个数和更新数据个数
+                newRecordCount = 0
+                updatedRecordCount = 0 
                 # 将数据存储到数据库
                 for index, row in df.iterrows():
                     customer_code = str(row.to_dict().get('客户编码')) # 遍历到每条的客户编码
                     # 查找数据库中是否有该条编码
                     existing_data = db.session.query(test_excel).filter(test_excel.customer_code==customer_code).first()
                     
-                    if existing_data:
+                    if existing_data: # 数据存在
+                        updatedRecordCount += 1
                         # 更改最近上传时间
                         existing_data.last_upload_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  
                         if existing_data.data_score != row.to_dict()['数采分']: # 数采分不一致的情况
@@ -55,6 +58,7 @@ def upload():
                         existing_data.data_score = row.to_dict()['数采分']
                         db.session.add(existing_data)
                     else:   # 数据库中不存在则新增数据
+                        newRecordCount += 1
                         excel_data = test_excel(
                             customer_code = row.to_dict()['客户编码'], 
                             # market_department =  row.to_dict()['市场部'],
@@ -69,7 +73,12 @@ def upload():
                         )   
                         db.session.add(excel_data)
                     db.session.commit()
-                return jsonify({'success': True, 'message': '文件成功上传并存储在数据库中'})
+                return jsonify({
+                    'success': True, 
+                    'message': '文件成功上传并存储在数据库中', 
+                    'newRecordCount': newRecordCount,
+                    'updatedRecordCount': updatedRecordCount,
+                    })
             except SQLAlchemyError as e:
                 db.session.rollback()
                 print(traceback.format_exc())  # 添加这行来打印异常堆栈信息

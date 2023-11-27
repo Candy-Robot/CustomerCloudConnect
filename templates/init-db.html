@@ -3,7 +3,7 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>数据更新文件上传页面</title>
+        <title>初始化上传页面</title>
         <style>
             body {
                 font-family: Arial, sans-serif;
@@ -54,7 +54,7 @@
     </header>
     <nav>
         <a href="#">页面1</a>
-        <a href="/upload">数据更新文件上传页面</a>
+        <a href="#">页面2</a>
         <a href="#">页面3</a>
         <a href="#">页面4</a>
     </nav>
@@ -86,7 +86,7 @@
                     formData.append('excelFile', file);
 
                     // 使用fetch API发送文件到服务器
-                    fetch('/upload', {
+                    fetch('/upload/init-db', {
                         method: 'POST',
                         body: formData
                     })
@@ -95,9 +95,23 @@
                         // 处理服务器的响应
                         console.log(data);
                         if (data.success) {
-                            document.getElementById('uploadResult').innerHTML = '上传成功'+ data.message;
                             // 这里可以添加上传成功跳转到别的页面的代码
-                            alert('文件上传成功')
+                            var successMessage = data.message;
+
+                            // 如果有新增记录和已存在记录的字段，则显示在提示信息中
+                            if (data.newRecordCount !== undefined && data.existRecordCount !== undefined) {
+                                successMessage += '\n新增记录数: ' + data.newRecordCount + '\n已存在记录数: ' + data.existRecordCount;
+                            }
+
+                            document.getElementById('uploadResult').innerHTML = successMessage;
+
+                            // 弹出提示框
+                            var userConfirmation = window.confirm(successMessage + '\n点击确定跳转到查询页面。');
+                            // 根据用户的选择来决定是否进行页面跳转
+                            if (userConfirmation) {
+                                // 文件上传成功后自动跳转到查询页面
+                                window.location.href = '/search';
+                            }
                         } else {
                             document.getElementById('uploadResult').innerHTML = '上传失败: ' + data.message;
                         }

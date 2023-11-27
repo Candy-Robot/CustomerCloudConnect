@@ -20,7 +20,7 @@
 | data_score                | FLOAT       | 数采分，表示客户在各个方面的绩效综合得分。         |
 | startup_days              | INT         | 启动天数，表示客户的业务启动时间。                 |
 | effective_upload_ratio    | FLOAT       | 有效上传比率，表示有效数据上传的比率。             |
-| upload_ratio_penalty      | FLOAT       | 上传比率惩罚，表示由于上传比率低而施加的惩罚。     |
+| upload_ratio_penalty      | FLOAT       | 有效上传比扣分，表示由于上传比率低而施加的惩罚。   |
 | sales_days                | INT         | 销售天数，表示客户的销售活动天数。                 |
 | average_sales_duration    | FLOAT       | 平均销售时长，表示客户的平均销售活动持续时间。     |
 | sales_duration_penalty    | FLOAT       | 销售时长扣分，表示由于销售时长低而施加的惩罚。     |
@@ -52,4 +52,8 @@ CREATE TABLE sales_penalty_detail (
     FOREIGN KEY (customer_code) REFERENCES customer_information(customer_code)
 );
 ~~~
+
+
+
+
 
