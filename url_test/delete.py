@@ -11,7 +11,7 @@ sys.path.append(parent_dir)
 from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from config import Config
-from models import db, CustomerInformation, InventoryPenaltyDetail, SalesPenaltyDetail
+from models import db, CustomerInformation, InventoryPenaltyDetail, SalesPenaltyDetail, DataScoreAndUploadTime
 
 app = Flask(__name__)
 app.config.from_object(Config)
@@ -21,6 +21,7 @@ with app.app_context():
     db.session.query(CustomerInformation).delete()
     db.session.query(InventoryPenaltyDetail).delete()
     db.session.query(SalesPenaltyDetail).delete()
+    db.session.query(DataScoreAndUploadTime).delete()
 
     # 提交更改
     db.session.commit()

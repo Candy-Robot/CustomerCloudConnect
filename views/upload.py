@@ -16,7 +16,7 @@ def index():
 # 初次初始化数据库 只有这里可以添加新数据
 # 后续可以添加判断，只有特定的市场部可以加入到数据库中
 @mod.route('/init-db', methods=['GET', 'POST'])
-def upload():
+def init_db():
     # GET方法调用如下函数
     if request.method == 'GET':
         return render_template('init-db.html')  
@@ -150,4 +150,143 @@ def upload():
                 return jsonify({'error': str(e)})
         else:
             return jsonify({'error': 'Invalid file type'})
-    
+
+
+@mod.route('/upload-db', methods=['GET', 'POST'])
+def upload_db():
+    # GET方法调用如下函数
+    if request.method == 'GET':
+        return render_template('upload-db.html')  
+        
+    # POST方法调用下面的函数
+    if request.method == 'POST':
+        # 返回文件中是否有excelFile
+        if 'excelFile' not in request.files:
+            return jsonify({'error': 'No file part'})
+        # 获取文件
+        file = request.files['excelFile']
+
+        if file.filename == '':
+            return jsonify({'error': 'No selected file'})
+
+        if file.filename.endswith('.xls') or file.filename.endswith('.xlsx'):
+            try:
+                df = pd.read_excel(file)
+                # 遍历所有单元格，将包含'-'的单元格设置为None
+                for column in df.columns:
+                    df[column] = df[column].apply(lambda x: None if x == '-' else x)
+                df.replace({np.nan: None}, inplace=True)
+                # 记录新增数据个数和更新数据个数
+                unExistRecordCount = 0
+                existRecordCount = 0
+                now_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                now_time_add_90 = (datetime.datetime.now()+datetime.timedelta(days=90)).strftime("%Y-%m-%d %H:%M:%S")
+                now_time_add_30 = (datetime.datetime.now()+datetime.timedelta(days=30)).strftime("%Y-%m-%d %H:%M:%S")
+                # 将数据存储到数据库
+                for index, row in df.iterrows():
+                    customer_code_df = row.to_dict()['客户编码']
+                    existing_data = db.session.query(CustomerInformation).filter(CustomerInformation.customer_code==customer_code_df).first()
+                    # 库存数据表的数据
+                    inventory_data = db.session.query(InventoryPenaltyDetail).filter(InventoryPenaltyDetail.customer_code==customer_code_df).first()
+                    # 销售数据表的数据
+                    sales_data = db.session.query(SalesPenaltyDetail).filter(SalesPenaltyDetail.customer_code==customer_code_df).first()
+                    # 数采分和最近上传时间
+                    score_data = db.session.query(DataScoreAndUploadTime).filter(DataScoreAndUploadTime.customer_code==customer_code_df).first()
+                    if existing_data: # 存在数据即可以进行对比
+                        existRecordCount += 1
+                        # 修改数采分和最近上传时间的表
+                        # 更改最近上传时间
+                        score_data.last_upload_time = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')  
+                        score_data.data_score = row.to_dict()['数采分']
+                        # 加入数采分和最近上传时间表
+                        db.session.add(score_data)
+                        
+                        # 扣分的逻辑，如果发生了扣分的情况，那么一定会产生当天的分数大于数据库内的分数,
+                        # 记录改天为操作发生的时间，并且将恢复日期修改为当天+恢复的时间
+                        # 修改库存数据表
+                        # 盘库扣分 恢复时间为3个月
+                        if inventory_data.inventory_penalty < row.to_dict()['盘库扣分']: 
+                            inventory_data.inventory_penalty_time = now_time
+                            inventory_data.inventory_penalty_recovery_time = now_time_add_90
+                        inventory_data.inventory_accuracy = row.to_dict()['盘库准确率']
+                        inventory_data.inventory_count = row.to_dict()['盘库次数']
+                        inventory_data.inspection_accuracy = row.to_dict()['检查准确率']
+                        inventory_data.inspection_count = row.to_dict()['检查次数']
+                        inventory_data.inventory_penalty = row.to_dict()['盘库扣分']
+                        # 存销比扣分 恢复时间为一个月
+                        if inventory_data.inventory_sales_penalty < row.to_dict()['存销比扣分值']: 
+                            inventory_data.inventory_sales_penalty_time = now_time
+                            inventory_data.inventory_sales_penalty_recovery_time = now_time_add_30
+                        inventory_data.inventory_sales_ratio = row.to_dict()['存销比']
+                        inventory_data.inventory_sales_penalty=row.to_dict()['存销比扣分值']
+                        # 负库存扣分项 隔天恢复 
+                        if inventory_data.negative_inventory_penalty < row.to_dict()['负库存扣分项']:
+                            inventory_data.negative_inventory_penalty_time = now_time
+                            inventory_data.negative_inventory_penalty_recovery_time = now_time
+                        inventory_data.negative_inventory=row.to_dict()['负库存']
+                        inventory_data.negative_inventory_penalty=row.to_dict()['负库存扣分项']
+                        # 人为修改库存 恢复时间为3个月
+                        if inventory_data.manual_inventory_changes_penalty < row.to_dict()['人为修改库存次数扣分']:
+                            inventory_data.manual_inventory_changes_penalty_time = now_time
+                            inventory_data.manual_inventory_changes_penalty_recovery_time = now_time_add_90
+                        inventory_data.manual_inventory_changes_count = row.to_dict()['人为修改库存次数']
+                        inventory_data.manual_inventory_changes_penalty=row.to_dict()['人为修改库存次数扣分']
+                        # 加入库存数据表
+                        db.session.add(inventory_data)
+
+                        # 有效上传比 恢复时间3个月
+                        if sales_data.upload_ratio_penalty < row.to_dict()['有效上传比例扣分']:
+                            sales_data.upload_ratio_penalty_time = now_time
+                            sales_data.upload_ratio_recovery_time = now_time_add_90
+                        sales_data.data_score=row.to_dict()['数采分']
+                        sales_data.startup_days=row.to_dict()['开机天数']
+                        sales_data.effective_upload_ratio=row.to_dict()['有效上传比例']
+                        sales_data.upload_ratio_penalty=row.to_dict()['有效上传比例扣分']
+                        # 销售时长扣分 恢复时间3个月
+                        if sales_data.sales_duration_penalty < row.to_dict()['销售时长扣分']:
+                            sales_data.sales_duration_penalty_time = now_time
+                            sales_data.sales_duration_recovery_time = now_time_add_90
+                        sales_data.sales_days=row.to_dict()['销售天数']
+                        sales_data.average_sales_duration=row.to_dict()['日均销售时长']
+                        sales_data.sales_duration_penalty=row.to_dict()['销售时长扣分']
+                        # 预警扣分 恢复时间3个月
+                        if sales_data.warning_penalty < row.to_dict()['预警扣分']:
+                            sales_data.warning_penalty_time = now_time
+                            sales_data.warning_recovery_time = now_time_add_90
+                        sales_data.warning_count=row.to_dict()['预警次数']
+                        sales_data.warning_penalty=row.to_dict()['预警扣分']
+                        # 集中销售 恢复时间3个月
+                        if sales_data.centralized_sales_penalty < row.to_dict()['集中销售次数扣分']:
+                            sales_data.centralized_sales_penalty_time = now_time
+                            sales_data.centralized_sales_recovery_time = now_time_add_90
+                        sales_data.centralized_sales_count=row.to_dict()['集中销售次数']
+                        sales_data.centralized_sales_penalty=row.to_dict()['集中销售次数扣分']
+                        # 延迟上传扣分 恢复时间3个月
+                        if sales_data.delayed_upload_penalty<row.to_dict()['延迟上传次数扣分']:
+                            sales_data.delayed_upload_penalty_time = now_time
+                            sales_data.delayed_upload_recovery_time = now_time_add_90
+                        sales_data.delayed_upload_count=row.to_dict()['延迟上传次数']
+                        sales_data.delayed_upload_penalty=row.to_dict()['延迟上传次数扣分']
+                        # 加入数据
+                        db.session.add(sales_data)
+
+                    else:
+                        unExistRecordCount += 1
+                    db.session.commit()
+                return jsonify({
+                    'success': True, 
+                    'message': '文件成功上传并存储在数据库中', 
+                    'existRecordCount' : existRecordCount,
+                    'unExistRecordCount' :unExistRecordCount,
+                    })
+            except SQLAlchemyError as e:
+                db.session.rollback()
+                print(traceback.format_exc())  # 添加这行来打印异常堆栈信息
+                return jsonify({'error': str(e)})
+            except Exception as e:
+                db.session.rollback()
+                print(traceback.format_exc())  # 添加这行来打印异常堆栈信息
+                return jsonify({'error': str(e)})
+        else:
+            return jsonify({'error': 'Invalid file type'})
+
