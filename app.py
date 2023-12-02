@@ -14,11 +14,13 @@ app.config.from_object(Config) # 从配置对象Config中加载配置项到 Flas
 # db = SQLAlchemy(app) #创建一个 SQLAlchemy 实例，并将 Flask 应用与该数据库实例关联
 db.init_app(app)
 
-from view_test import mod 
-app.register_blueprint(mod)
+# from view_test import mod 
+# app.register_blueprint(mod)
 
 from views import upload
+from views import query
 app.register_blueprint(upload.mod)
-        
+app.register_blueprint(query.mod)
+
 if __name__ == '__main__':
     app.run(debug=True)

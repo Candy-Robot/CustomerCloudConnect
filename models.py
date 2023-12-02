@@ -108,3 +108,9 @@ class DataScoreAndUploadTime(db.Model):
     customer_code = db.Column(db.String(50), primary_key=True )     # 客户代码
     data_score = db.Column(db.Float )               # 数采分
     last_upload_time = db.Column(db.DateTime)     # 最近上传时间
+
+# 用户信息数据库
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    username = db.Column(db.String(80), unique=True, nullable=False)
+    password = db.Column(db.String(80), nullable=False)

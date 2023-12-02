@@ -20,11 +20,10 @@
     <select id="customerManager" >
         <option value="" disabled selected>请选择客户经理</option>
     </select>
-    <!-- <label for="customerManager">客户经理:</label>
-    <select id="customerManager">
-        <option value="">下拉单选</option>
-        通过后端接口动态加载客户经理选项
-    </select> -->
+
+    <!-- 公司名称输入框 -->
+    <label for="storeName">公司名称:</label>
+    <input type="text" id="storeName" placeholder="请输入公司名称">
 
     <!-- 查询按钮 -->
     <button onclick="fetchData()">查询</button>
@@ -41,15 +40,21 @@
     // 获取客户编码和客户经理的选择框
     var customerCodeSelect = document.getElementById('customerCode');
     var customerManagerSelect = document.getElementById('customerManager');
-
-    // 使用 Fetch API 获取客户经理选项
+    var storeNameSelect = document.getElementById('storeName')
+    // 使用 Fetch API 获取客户经理选项      
     // customerManagerSelect.addEventListener('click', function() {
     function fetchCustomerData()   {
-        fetch('/get_customer_managers')
+        fetch('/query/get_customer_managers')
             .then(response => response.json())
             .then(data => {
                 // 清空现有选项
                 customerManagerSelect.innerHTML = '';
+                // 添加“全部”选项
+                var allOption = document.createElement('option');
+                allOption.value = ''; // 这里可以根据实际需要设置一个特殊的值
+                allOption.text = '全部';
+                customerManagerSelect.add(allOption);
+
                 // 将客户经理选项添加到下拉框
                 data.customer_managers.forEach(manager => {
                     var option = document.createElement('option');
@@ -70,33 +75,104 @@
     function fetchData() {
         var selectedCustomerCode = customerCodeSelect.value;
         var selectedCustomerManager = customerManagerSelect.value;
+        var selectstoreName = storeNameSelect.value;
 
         // 发起后端请求，根据选择的客户编码和客户经理查询数据
-        fetch(`/get_data?customer_code=${selectedCustomerCode}&customer_manager=${selectedCustomerManager}`)
+        fetch(`/query/get_data?customer_code=${selectedCustomerCode}&customer_manager=${selectedCustomerManager}&store_name=${selectstoreName}`)
             .then(response => response.json())
             .then(data => {
                 // 清空展示容器
                 displayContainer.innerHTML = '';
-
-                // 展示数据
                 data.data.forEach(item => {
                     const dataItem = document.createElement('div');
+                    dataItem.style.display = 'flex';
+                    dataItem.style.flexDirection = 'column';
+                    dataItem.style.gap = '8px'; // 设置行间距
+
                     dataItem.innerHTML = `
-                        <p>客户编码: ${item.customer_code}</p>
-                        <p>客户经理: ${item.customer_manager}</p>
-                        <p>客户名称: ${item.company_name}</p>
-                        <p>数采分: ${item.data_score}</p>
-                        <p>最近上传时间: ${item.last_upload_time}</p>
-                        <p>最近数采分变动时间: ${item.last_modified_time}</p>
-                        <p>恢复时间: ${item.restore_time}</p>
-                        <hr>
-                    `;
-                    displayContainer.appendChild(dataItem);;
+                        <p style="margin: 0;">客户编码: ${item.customer_code}</p>
+                        <p style="margin: 0;">公司名称: ${item.company_name}</p>
+                        <p style="margin: 0;">客户经理: ${item.customer_manager}</p>
+                        <p style="margin: 0;">数采分: ${item.data_score}</p>
+                        <p style="margin: 0;">最近上传时间: ${formatDateTime(item.last_upload_time)}</p>
+
+
+                        <!-- 盘库扣分 -->
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="margin: 0;">盘库扣分: ${item.inventory_penalty}</span>
+                            <span style="margin-left: 32px;">盘库扣分时间: ${formatDateTime(item.inventory_penalty_time)}</span> <!-- 插入更多空格 -->
+                        </div>
+
+                        <!-- 存销比扣分 -->
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="margin: 0;">存销比扣分: ${item.inventory_sales_penalty}</span>
+                            <span style="margin-left: 24px;">存销比扣分时间: ${formatDateTime(item.inventory_sales_penalty_time)}</span> <!-- 插入更多空格 -->
+                        </div>
+
+                        <!-- 负库存扣分 -->
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="margin: 0;">负库存扣分: ${item.negative_inventory_penalty}</span>
+                            <span style="margin-left: 16px;">负库存扣分时间: ${formatDateTime(item.negative_inventory_penalty_time)}</span> <!-- 插入更多空格 -->
+                        </div>
+
+                        <!-- 人为修改库存扣分 -->
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="margin: 0;">人为修改库存扣分: ${item.manual_inventory_changes_penalty}</span>
+                            <span style="margin-left: 8px;">人为修改库存扣分时间: ${formatDateTime(item.manual_inventory_changes_penalty_time)}</span> <!-- 插入更多空格 -->
+                        </div>
+
+                        <!-- 有效上传比例扣分 -->
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="margin: 0;">有效上传比例扣分: ${item.upload_ratio_penalty}</span>
+                            <span style="margin-left: 32px;">有效上传比例扣分时间: ${formatDateTime(item.upload_ratio_penalty_time)}</span> <!-- 插入更多空格 -->
+                        </div>
+
+                        <!-- 销售时长扣分 -->
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="margin: 0;">销售时长扣分: ${item.sales_duration_penalty}</span>
+                            <span style="margin-left: 16px;">销售时长扣分时间: ${formatDateTime(item.sales_duration_penalty_time)}</span> <!-- 插入更多空格 -->
+                        </div>
+
+                        <!-- 预警扣分 -->
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="margin: 0;">预警扣分: ${item.warning_penalty}</span>
+                            <span style="margin-left: 32px;">预警扣分时间: ${formatDateTime(item.warning_penalty_time)}</span> <!-- 插入更多空格 -->
+                        </div>
+
+                        <!-- 集中销售扣分 -->
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="margin: 0;">集中销售扣分: ${item.centralized_sales_penalty}</span>
+                            <span style="margin-left: 8px;">集中销售扣分时间: ${formatDateTime(item.centralized_sales_penalty_time)}</span> <!-- 插入更多空格 -->
+                        </div>
+
+                        <!-- 延迟上传扣分 -->
+                        <div style="display: flex; align-items: center; gap: 8px;">
+                            <span style="margin: 0;">延迟上传扣分: ${item.delayed_upload_penalty}</span>
+                            <span style="margin-left: 24px;">延迟上传扣分时间: ${formatDateTime(item.delayed_upload_penalty_time)}</span> <!-- 插入更多空格 -->
+                        </div>
+
+                        <hr style="margin: 8px 0;">
+                        `;
+                    displayContainer.appendChild(dataItem);
                 });
             })
             .catch(error => console.error('Error:', error));
     }
-
+    function formatDateTime(dateTime) {
+    // 判断时间是否为空
+        if (dateTime) {
+            // 将datetime格式转换为年月日的string类型
+            return new Date(dateTime).toLocaleDateString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit'
+            });
+        } else {
+            // 时间为空时返回空字符串
+            return '';
+        }
+    }
+        
     // 初始化页面时触发一次查询
     // fetchData();
     fetchCustomerData()
