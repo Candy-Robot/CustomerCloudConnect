@@ -6,8 +6,15 @@ from flask import render_template
 import datetime
 import traceback
 from sqlalchemy.exc import SQLAlchemyError
+from decorators import login_required
 
 mod = Blueprint('upload', __name__, url_prefix='/upload')
+
+# 使用装饰器，确保所有路由都经过登录验证
+@mod.before_request
+@login_required
+def before_request():
+    pass
 
 @mod.route('/')
 def index():

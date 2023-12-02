@@ -1,7 +1,14 @@
 from flask import request, jsonify, Blueprint, render_template
 from models import  db , CustomerInformation, InventoryPenaltyDetail, SalesPenaltyDetail
 from models import DataScoreAndUploadTime
+from decorators import login_required
 mod = Blueprint('query', __name__, url_prefix='/query')
+
+# 使用装饰器，确保所有路由都经过登录验证
+@mod.before_request
+@login_required
+def before_request():
+    pass
 
 @mod.route('/', methods=['GET'])
 def search():

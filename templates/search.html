@@ -3,11 +3,117 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Query</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f4;
+        }
+
+        header {
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            padding: 20px 0;
+        }
+
+        nav {
+            text-align: center;
+            margin-top: 20px;
+        }
+
+        a {
+            display: inline-block;
+            text-decoration: none;
+            padding: 10px 20px;
+            margin: 10px;
+            color: #333;
+            background-color: #fff;
+            border-radius: 5px;
+            transition: background-color 0.3s ease;
+        }
+
+        a:hover {
+            background-color: #eee;
+        }
+        #displayContainer {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 16px; /* 间距 */
+        }
+        /* 卡片样式 */
+        .card {
+            flex: 1 0 calc(33.33% - 16px); /* 计算每行显示 3 列，可以根据需要调整列数 */
+            border: 1px solid #ddd;
+            padding: 12px;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            /* 添加其他样式定义 */
+        }
+
+        #selectContainer {
+			display: flex;          /* 使用 Flex 布局 */
+			justify-content: space-between;  /* 横向等距排列子元素 */
+			align-items: center;    /* 垂直居中子元素 */
+			background-color: #fff;
+			padding: 20px;
+			border-radius: 5px;
+			box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+			margin: 20px auto;
+			width: auto; /* 将max-width修改为width:auto */
+			flex-wrap: wrap;        /* 如果子元素过多，自动换行 */
+        }
+		/* 为了保持每个输入框的宽度相等，可以添加以下样式 */
+		#selectContainer label,
+		#selectContainer input,
+		#selectContainer select {
+		    flex: 1;   /* 子元素平分父容器的宽度 */
+		    margin: 0 10px;  /* 为了增加一些间距 */
+		}
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+        }
+
+        input,
+        select {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+        }
+
+        button {
+            background-color: #333;
+            color: #fff;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s ease;
+        }
+
+        button:hover {
+            background-color: #555;
+        }
+    </style>
 </head>
 <body>
-
-<h2>数采分查询</h2>
+    <header>
+        <h1>数采分查询</h1>
+    </header>
+    <nav>
+        <a href="/user/">用户登陆界面</a>
+        <a href="/upload/init-db">数据初始化文件上传页面</a>
+        <a href="/upload/upload-db">数据更新文件上传页面</a>
+        <a href="/query/">查询界面</a>
+    </nav>
 
 <!-- 客户编码和客户经理选择框放在同一个容器中 -->
 <div id="selectContainer">
@@ -84,79 +190,13 @@
                 // 清空展示容器
                 displayContainer.innerHTML = '';
                 data.data.forEach(item => {
-                    const dataItem = document.createElement('div');
-                    dataItem.style.display = 'flex';
-                    dataItem.style.flexDirection = 'column';
-                    dataItem.style.gap = '8px'; // 设置行间距
-
-                    dataItem.innerHTML = `
-                        <p style="margin: 0;">客户编码: ${item.customer_code}</p>
-                        <p style="margin: 0;">公司名称: ${item.company_name}</p>
-                        <p style="margin: 0;">客户经理: ${item.customer_manager}</p>
-                        <p style="margin: 0;">数采分: ${item.data_score}</p>
-                        <p style="margin: 0;">最近上传时间: ${formatDateTime(item.last_upload_time)}</p>
-
-
-                        <!-- 盘库扣分 -->
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="margin: 0;">盘库扣分: ${item.inventory_penalty}</span>
-                            <span style="margin-left: 32px;">盘库扣分时间: ${formatDateTime(item.inventory_penalty_time)}</span> <!-- 插入更多空格 -->
-                        </div>
-
-                        <!-- 存销比扣分 -->
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="margin: 0;">存销比扣分: ${item.inventory_sales_penalty}</span>
-                            <span style="margin-left: 24px;">存销比扣分时间: ${formatDateTime(item.inventory_sales_penalty_time)}</span> <!-- 插入更多空格 -->
-                        </div>
-
-                        <!-- 负库存扣分 -->
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="margin: 0;">负库存扣分: ${item.negative_inventory_penalty}</span>
-                            <span style="margin-left: 16px;">负库存扣分时间: ${formatDateTime(item.negative_inventory_penalty_time)}</span> <!-- 插入更多空格 -->
-                        </div>
-
-                        <!-- 人为修改库存扣分 -->
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="margin: 0;">人为修改库存扣分: ${item.manual_inventory_changes_penalty}</span>
-                            <span style="margin-left: 8px;">人为修改库存扣分时间: ${formatDateTime(item.manual_inventory_changes_penalty_time)}</span> <!-- 插入更多空格 -->
-                        </div>
-
-                        <!-- 有效上传比例扣分 -->
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="margin: 0;">有效上传比例扣分: ${item.upload_ratio_penalty}</span>
-                            <span style="margin-left: 32px;">有效上传比例扣分时间: ${formatDateTime(item.upload_ratio_penalty_time)}</span> <!-- 插入更多空格 -->
-                        </div>
-
-                        <!-- 销售时长扣分 -->
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="margin: 0;">销售时长扣分: ${item.sales_duration_penalty}</span>
-                            <span style="margin-left: 16px;">销售时长扣分时间: ${formatDateTime(item.sales_duration_penalty_time)}</span> <!-- 插入更多空格 -->
-                        </div>
-
-                        <!-- 预警扣分 -->
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="margin: 0;">预警扣分: ${item.warning_penalty}</span>
-                            <span style="margin-left: 32px;">预警扣分时间: ${formatDateTime(item.warning_penalty_time)}</span> <!-- 插入更多空格 -->
-                        </div>
-
-                        <!-- 集中销售扣分 -->
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="margin: 0;">集中销售扣分: ${item.centralized_sales_penalty}</span>
-                            <span style="margin-left: 8px;">集中销售扣分时间: ${formatDateTime(item.centralized_sales_penalty_time)}</span> <!-- 插入更多空格 -->
-                        </div>
-
-                        <!-- 延迟上传扣分 -->
-                        <div style="display: flex; align-items: center; gap: 8px;">
-                            <span style="margin: 0;">延迟上传扣分: ${item.delayed_upload_penalty}</span>
-                            <span style="margin-left: 24px;">延迟上传扣分时间: ${formatDateTime(item.delayed_upload_penalty_time)}</span> <!-- 插入更多空格 -->
-                        </div>
-
-                        <hr style="margin: 8px 0;">
-                        `;
+                    const dataItem = createCard(item);
+        
                     displayContainer.appendChild(dataItem);
                 });
             })
             .catch(error => console.error('Error:', error));
+     
     }
     function formatDateTime(dateTime) {
     // 判断时间是否为空
@@ -172,7 +212,83 @@
             return '';
         }
     }
-        
+    function createCard(data) {
+        const card = document.createElement('div');
+        card.classList.add('card'); // 添加样式类，用于样式定义
+        card.style.display = 'flex';
+        card.style.flexDirection = 'column';
+        card.style.gap = '8px';
+
+        // 根据后端数据填充卡片内容
+        card.innerHTML = `
+            <h3>${data.company_name}</h3>
+            <p>数采分:${data.data_score}</p>
+            <!-- 添加其他需要展示的数据 ->
+            <p style="margin: 0;">客户编码: ${data.customer_code}</p>
+            <p style="margin: 0;">公司名称: ${data.company_name}</p>
+            <p style="margin: 0;">客户经理: ${data.customer_manager}</p>
+            <p style="margin: 0;">数采分: ${data.data_score}</p>
+            <p style="margin: 0;">最近上传时间: ${formatDateTime(data.last_upload_time)}</p>
+
+
+            <!-- 盘库扣分 -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="margin: 0;">盘库扣分: ${data.inventory_penalty}</span>
+                <span style="margin-left: 32px;">盘库扣分时间: ${formatDateTime(data.inventory_penalty_time)}</span> <!-- 插入更多空格 -->
+            </div>
+
+            <!-- 存销比扣分 -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="margin: 0;">存销比扣分: ${data.inventory_sales_penalty}</span>
+                <span style="margin-left: 24px;">存销比扣分时间: ${formatDateTime(data.inventory_sales_penalty_time)}</span> <!-- 插入更多空格 -->
+            </div>
+
+            <!-- 负库存扣分 -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="margin: 0;">负库存扣分: ${data.negative_inventory_penalty}</span>
+                <span style="margin-left: 16px;">负库存扣分时间: ${formatDateTime(data.negative_inventory_penalty_time)}</span> <!-- 插入更多空格 -->
+            </div>
+
+            <!-- 人为修改库存扣分 -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="margin: 0;">人为修改库存扣分: ${data.manual_inventory_changes_penalty}</span>
+                <span style="margin-left: 8px;">人为修改库存扣分时间: ${formatDateTime(data.manual_inventory_changes_penalty_time)}</span> <!-- 插入更多空格 -->
+            </div>
+
+            <!-- 有效上传比例扣分 -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="margin: 0;">有效上传比例扣分: ${data.upload_ratio_penalty}</span>
+                <span style="margin-left: 32px;">有效上传比例扣分时间: ${formatDateTime(data.upload_ratio_penalty_time)}</span> <!-- 插入更多空格 -->
+            </div>
+
+            <!-- 销售时长扣分 -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="margin: 0;">销售时长扣分: ${data.sales_duration_penalty}</span>
+                <span style="margin-left: 16px;">销售时长扣分时间: ${formatDateTime(data.sales_duration_penalty_time)}</span> <!-- 插入更多空格 -->
+            </div>
+
+            <!-- 预警扣分 -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="margin: 0;">预警扣分: ${data.warning_penalty}</span>
+                <span style="margin-left: 32px;">预警扣分时间: ${formatDateTime(data.warning_penalty_time)}</span> <!-- 插入更多空格 -->
+            </div>
+
+            <!-- 集中销售扣分 -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="margin: 0;">集中销售扣分: ${data.centralized_sales_penalty}</span>
+                <span style="margin-left: 8px;">集中销售扣分时间: ${formatDateTime(data.centralized_sales_penalty_time)}</span> <!-- 插入更多空格 -->
+            </div>
+
+            <!-- 延迟上传扣分 -->
+            <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="margin: 0;">延迟上传扣分: ${data.delayed_upload_penalty}</span>
+                <span style="margin-left: 24px;">延迟上传扣分时间: ${formatDateTime(data.delayed_upload_penalty_time)}</span> <!-- 插入更多空格 -->
+            </div>
+
+            <hr style="margin: 8px 0;">
+            `;
+        return card;
+    }
     // 初始化页面时触发一次查询
     // fetchData();
     fetchCustomerData()
